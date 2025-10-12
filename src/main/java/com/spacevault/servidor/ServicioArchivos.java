@@ -3,8 +3,8 @@ package com.spacevault.servidor;
 import jakarta.jws.WebService;
 import jakarta.jws.WebMethod;
 import com.spacevault.servidor.nodos.GestorNodos;
+import java.util.concurrent.ConcurrentHashMap;
 
-// Implementación del servicio, debe coincidir con la interfaz
 @WebService(
     endpointInterface = "com.spacevault.servidor.ServicioArchivosInterface",
     serviceName = "ServicioArchivosService",
@@ -13,22 +13,35 @@ import com.spacevault.servidor.nodos.GestorNodos;
 )
 public class ServicioArchivos implements ServicioArchivosInterface {
 
+    private ConcurrentHashMap<String, String> usuarios = new ConcurrentHashMap<>();
     private GestorNodos gestor = new GestorNodos();
 
     @WebMethod
-    public String subirArchivo(String nombre, String contenido) {
-        System.out.println("📦 Recibido archivo: " + nombre);
-        return gestor.almacenarArchivo(nombre, contenido);
+    public String registrarUsuario(String usuario, String password) {
+        if (usuarios.containsKey(usuario)) return "❌ Usuario ya existe";
+        usuarios.put(usuario, password);
+        return "✅ Usuario registrado con éxito";
     }
 
     @WebMethod
-    public String leerArchivo(String nombre) {
-        System.out.println("📖 Leyendo archivo: " + nombre);
-        return gestor.leerArchivo(nombre);
+    public String loginUsuario(String usuario, String password) {
+        if (!usuarios.containsKey(usuario)) return "❌ Usuario no encontrado";
+        if (!usuarios.get(usuario).equals(password)) return "❌ Contraseña incorrecta";
+        return "✅ Bienvenido a SpaceVault, " + usuario + " 🚀";
     }
 
     @WebMethod
-    public String listarNodos() {
-        return gestor.listarNodos();
+    public String crearDirectorio(String usuario, String ruta) {
+        return gestor.crearDirectorio(usuario, ruta);
+    }
+
+    @WebMethod
+    public String subirArchivo(String usuario, String ruta, String nombre, byte[] datos) {
+        return gestor.almacenarArchivo(usuario, ruta, nombre, datos);
+    }
+
+    @WebMethod
+    public byte[] leerArchivo(String usuario, String ruta, String nombre) {
+        return gestor.leerArchivo(usuario, ruta, nombre);
     }
 }

@@ -1,25 +1,53 @@
 package com.spacevault.nodos;
 
+import java.io.*;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class NodeRemoteImpl extends UnicastRemoteObject implements NodeRemote {
 
-    private ConcurrentHashMap<String, String> archivos = new ConcurrentHashMap<>();
+    private static final String BASE_DIR = "data-Node1";
 
     public NodeRemoteImpl() throws RemoteException {
         super();
+        File base = new File(BASE_DIR);
+        if (!base.exists()) base.mkdirs();
     }
 
     @Override
-    public void guardar(String nombre, String contenido) throws RemoteException {
-        archivos.put(nombre, contenido);
-        System.out.println("💾 Archivo guardado en nodo: " + nombre);
+    public void crearDirectorio(String ruta) throws RemoteException {
+        File dir = new File(BASE_DIR + File.separator + ruta);
+        if (!dir.exists()) {
+            dir.mkdirs();
+            System.out.println("📁 Directorio creado: " + dir.getAbsolutePath());
+        }
     }
 
     @Override
-    public String leer(String nombre) throws RemoteException {
-        return archivos.getOrDefault(nombre, "Archivo no encontrado ❌");
+    public void guardarArchivo(String ruta, String nombre, byte[] datos) throws RemoteException {
+        try {
+            File dir = new File(BASE_DIR + File.separator + ruta);
+            if (!dir.exists()) dir.mkdirs();
+            File f = new File(dir, nombre);
+            try (FileOutputStream fos = new FileOutputStream(f)) {
+                fos.write(datos);
+            }
+            System.out.println("💾 Archivo guardado: " + f.getAbsolutePath());
+        } catch (IOException e) {
+            throw new RemoteException("Error al guardar archivo", e);
+        }
+    }
+
+    @Override
+    public byte[] leerArchivo(String ruta, String nombre) throws RemoteException {
+        try {
+            File f = new File(BASE_DIR + File.separator + ruta + File.separator + nombre);
+            if (!f.exists()) return null;
+            try (FileInputStream fis = new FileInputStream(f)) {
+                return fis.readAllBytes();
+            }
+        } catch (IOException e) {
+            throw new RemoteException("Error al leer archivo", e);
+        }
     }
 }
