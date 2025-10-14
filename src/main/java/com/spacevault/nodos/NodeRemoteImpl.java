@@ -50,4 +50,61 @@ public class NodeRemoteImpl extends UnicastRemoteObject implements NodeRemote {
             throw new RemoteException("Error al leer archivo", e);
         }
     }
+
+    // 🗑️ Eliminar archivo o carpeta
+    @Override
+    public void eliminarArchivo(String ruta, String nombre) throws RemoteException {
+        try {
+            File objetivo = new File(BASE_DIR + File.separator + ruta, nombre);
+            if (!objetivo.exists()) {
+                System.out.println("⚠️ Archivo o directorio no encontrado: " + objetivo.getAbsolutePath());
+                return;
+            }
+
+            if (objetivo.isDirectory()) {
+                eliminarDirectorioRecursivo(objetivo);
+                System.out.println("🗑️ Directorio eliminado: " + objetivo.getAbsolutePath());
+            } else {
+                objetivo.delete();
+                System.out.println("🗑️ Archivo eliminado: " + objetivo.getAbsolutePath());
+            }
+        } catch (Exception e) {
+            throw new RemoteException("Error eliminando archivo o directorio", e);
+        }
+    }
+
+    private void eliminarDirectorioRecursivo(File dir) {
+        File[] files = dir.listFiles();
+        if (files != null) {
+            for (File f : files) {
+                if (f.isDirectory()) eliminarDirectorioRecursivo(f);
+                else f.delete();
+            }
+        }
+        dir.delete();
+    }
+
+    // 📦 Mover o renombrar archivo
+    @Override
+    public void moverArchivo(String rutaVieja, String rutaNueva) throws RemoteException {
+        try {
+            File origen = new File(BASE_DIR + File.separator + rutaVieja);
+            File destino = new File(BASE_DIR + File.separator + rutaNueva);
+
+            if (!origen.exists()) {
+                System.out.println("⚠️ Archivo origen no encontrado: " + origen.getAbsolutePath());
+                return;
+            }
+
+            destino.getParentFile().mkdirs();
+
+            if (origen.renameTo(destino)) {
+                System.out.println("📦 Archivo movido de " + origen.getAbsolutePath() + " a " + destino.getAbsolutePath());
+            } else {
+                throw new IOException("No se pudo mover el archivo o directorio");
+            }
+        } catch (Exception e) {
+            throw new RemoteException("Error moviendo archivo o directorio", e);
+        }
+    }
 }

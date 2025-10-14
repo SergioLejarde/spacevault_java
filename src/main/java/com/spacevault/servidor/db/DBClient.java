@@ -14,7 +14,7 @@ public class DBClient {
     }
 
     /** Envía una línea de comando al DBServer y retorna la respuesta textual. */
-    private String send(String line) {
+    public String send(String line) { // ← cambio a 'public'
         try (Socket s = new Socket(host, port);
              BufferedReader in = new BufferedReader(new InputStreamReader(s.getInputStream(), StandardCharsets.UTF_8));
              BufferedWriter out = new BufferedWriter(new OutputStreamWriter(s.getOutputStream(), StandardCharsets.UTF_8))) {

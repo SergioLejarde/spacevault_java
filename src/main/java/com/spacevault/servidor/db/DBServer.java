@@ -27,16 +27,17 @@ public class DBServer {
         System.out.println("✅ Conectado a PostgreSQL en " + jdbcUrl);
         initSchema();
 
-        ServerSocket server = new ServerSocket(port);
-        System.out.println("🗄️ DBServer escuchando en TCP " + port + " (protocolo texto)");
-
-        ExecutorService pool = Executors.newFixedThreadPool(8);
-        while (true) {
-            Socket client = server.accept();
-            pool.submit(() -> handle(client));
+        try (ServerSocket server = new ServerSocket(port)) {
+            System.out.println("🗄️ DBServer escuchando en TCP " + port + " (protocolo texto)");
+            ExecutorService pool = Executors.newFixedThreadPool(8);
+            while (true) {
+                Socket client = server.accept();
+                pool.submit(() -> handle(client));
+            }
         }
     }
 
+    /** Crear tablas necesarias **/
     private void initSchema() throws SQLException {
         try (Statement st = conn.createStatement()) {
             st.executeUpdate("""
@@ -49,15 +50,34 @@ public class DBServer {
             st.executeUpdate("""
                 CREATE TABLE IF NOT EXISTS compartidos (
                   id SERIAL PRIMARY KEY,
-                  owner   VARCHAR(50) NOT NULL,
+                  owner VARCHAR(50) NOT NULL,
                   invitado VARCHAR(50) NOT NULL,
-                  ruta    VARCHAR(255) NOT NULL,
-                  nombre  VARCHAR(255) NOT NULL
+                  ruta VARCHAR(255) NOT NULL,
+                  nombre VARCHAR(255) NOT NULL
+                );
+            """);
+            st.executeUpdate("""
+                CREATE TABLE IF NOT EXISTS archivos (
+                  id SERIAL PRIMARY KEY,
+                  usuario VARCHAR(50),
+                  ruta VARCHAR(255),
+                  nombre VARCHAR(255),
+                  tamanio BIGINT,
+                  nodo VARCHAR(50)
+                );
+            """);
+            st.executeUpdate("""
+                CREATE TABLE IF NOT EXISTS directorios (
+                  id SERIAL PRIMARY KEY,
+                  usuario VARCHAR(50),
+                  rutaPadre VARCHAR(255),
+                  nombre VARCHAR(255)
                 );
             """);
         }
     }
 
+    /** Manejar conexiones entrantes TCP **/
     private void handle(Socket client) {
         try (client;
              BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream(), StandardCharsets.UTF_8));
@@ -71,28 +91,33 @@ public class DBServer {
             out.write("\n");
             out.flush();
         } catch (Exception e) {
-            // Log mínimo
             e.printStackTrace();
         }
     }
 
+    /** Procesar comandos entrantes **/
     private String process(String cmd) {
         try {
             String[] p = cmd.split("\\|");
             switch (p[0]) {
-                case "REGISTER":  // REGISTER|user|pass
-                    return register(p[1], p[2]) ? "OK" : "EXISTS";
-                case "LOGIN":     // LOGIN|user|pass
-                    return login(p[1], p[2]) ? "OK" : "FAIL";
-                case "SHARE":     // SHARE|owner|invitado|ruta|nombre
-                    return share(p[1], p[2], p[3], p[4]) ? "OK" : "FAIL";
-                default:
-                    return "ERR:CMD";
+                case "REGISTER": return register(p[1], p[2]) ? "OK" : "EXISTS";
+                case "LOGIN": return login(p[1], p[2]) ? "OK" : "FAIL";
+                case "SHARE": return share(p[1], p[2], p[3], p[4]) ? "OK" : "FAIL";
+
+                // NUEVOS COMANDOS
+                case "MKDIR": return mkdir(p[1], p[2], p[3]) ? "OK" : "FAIL";
+                case "STORE": return storeFile(p[1], p[2], p[3], Long.parseLong(p[4]), p[5]) ? "OK" : "FAIL";
+                case "DELETE": return deleteFile(p[1], p[2], p[3]) ? "OK" : "FAIL";
+                case "MOVE": return moveFile(p[1], p[2], p[3]) ? "OK" : "FAIL";
+
+                default: return "ERR:CMD";
             }
         } catch (Exception e) {
             return "ERR:" + e.getMessage();
         }
     }
+
+    // ----------- FUNCIONES PRINCIPALES -----------
 
     private boolean register(String usuario, String password) throws SQLException {
         String sql = "INSERT INTO usuarios (usuario, password) VALUES (?, ?) ON CONFLICT (usuario) DO NOTHING";
@@ -125,13 +150,55 @@ public class DBServer {
         }
     }
 
-    public static void main(String[] args) throws Exception {
-        // Args opcionales: puerto, jdbcUrl, user, pass
-        int port      = args.length > 0 ? Integer.parseInt(args[0]) : 9090;
-        String url    = args.length > 1 ? args[1] : "jdbc:postgresql://localhost:5432/spacevault";
-        String user   = args.length > 2 ? args[2] : "postgres";
-        String pass   = args.length > 3 ? args[3] : "postgres";
+    private boolean mkdir(String usuario, String rutaPadre, String nombre) throws SQLException {
+        String sql = "INSERT INTO directorios (usuario, rutaPadre, nombre) VALUES (?, ?, ?)";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, usuario);
+            ps.setString(2, rutaPadre);
+            ps.setString(3, nombre);
+            return ps.executeUpdate() > 0;
+        }
+    }
 
+    private boolean storeFile(String usuario, String ruta, String nombre, long tamanio, String nodo) throws SQLException {
+        String sql = "INSERT INTO archivos (usuario, ruta, nombre, tamanio, nodo) VALUES (?, ?, ?, ?, ?)";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, usuario);
+            ps.setString(2, ruta);
+            ps.setString(3, nombre);
+            ps.setLong(4, tamanio);
+            ps.setString(5, nodo);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
+    private boolean deleteFile(String usuario, String ruta, String nombre) throws SQLException {
+        String sql = "DELETE FROM archivos WHERE usuario=? AND ruta=? AND nombre=?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, usuario);
+            ps.setString(2, ruta);
+            ps.setString(3, nombre);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
+    private boolean moveFile(String usuario, String rutaOld, String rutaNew) throws SQLException {
+        String sql = "UPDATE archivos SET ruta=? WHERE usuario=? AND ruta=?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, rutaNew);
+            ps.setString(2, usuario);
+            ps.setString(3, rutaOld);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
+    // --------------------------------------------
+
+    public static void main(String[] args) throws Exception {
+        int port = args.length > 0 ? Integer.parseInt(args[0]) : 9090;
+        String url = args.length > 1 ? args[1] : "jdbc:postgresql://localhost:5432/spacevaultjava";
+        String user = args.length > 2 ? args[2] : "postgres";
+        String pass = args.length > 3 ? args[3] : "postgres";
         new DBServer(port, url, user, pass).start();
     }
 }
