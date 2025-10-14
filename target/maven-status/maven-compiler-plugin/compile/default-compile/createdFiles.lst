@@ -1,10 +1,12 @@
 com/spacevault/servidor/ServerPublisher.class
 com/spacevault/nodos/NodeRemote.class
+com/spacevault/servidor/db/DBServer.class
 com/spacevault/nodos/NodeServer.class
 com/example/App.class
 com/spacevault/servidor/ServicioArchivos.class
 com/spacevault/nodos/NodeRemoteImpl.class
 com/spacevault/servidor/ServicioArchivosInterface.class
+com/spacevault/servidor/db/DBClient.class
 com/spacevault/cliente/ClienteSOAP.class
 com/spacevault/servidor/nodos/GestorNodos.class
 com/spacevault/servidor/workers/WorkerPool.class

@@ -3,7 +3,7 @@ package com.spacevault.servidor;
 import jakarta.jws.WebService;
 import jakarta.jws.WebMethod;
 import com.spacevault.servidor.nodos.GestorNodos;
-import java.util.concurrent.ConcurrentHashMap;
+import com.spacevault.servidor.db.DBClient;  // 🔹 nuevo import
 
 @WebService(
     endpointInterface = "com.spacevault.servidor.ServicioArchivosInterface",
@@ -13,21 +13,19 @@ import java.util.concurrent.ConcurrentHashMap;
 )
 public class ServicioArchivos implements ServicioArchivosInterface {
 
-    private ConcurrentHashMap<String, String> usuarios = new ConcurrentHashMap<>();
     private GestorNodos gestor = new GestorNodos();
+    private DBClient db = new DBClient("localhost", 9090); // 🔹 conexión TCP al DBServer
 
     @WebMethod
     public String registrarUsuario(String usuario, String password) {
-        if (usuarios.containsKey(usuario)) return "❌ Usuario ya existe";
-        usuarios.put(usuario, password);
-        return "✅ Usuario registrado con éxito";
+        boolean ok = db.registrarUsuario(usuario, password);
+        return ok ? "✅ Usuario registrado en base de datos" : "⚠️ Usuario ya existe o error de conexión";
     }
 
     @WebMethod
     public String loginUsuario(String usuario, String password) {
-        if (!usuarios.containsKey(usuario)) return "❌ Usuario no encontrado";
-        if (!usuarios.get(usuario).equals(password)) return "❌ Contraseña incorrecta";
-        return "✅ Bienvenido a SpaceVault, " + usuario + " 🚀";
+        boolean ok = db.login(usuario, password);
+        return ok ? "✅ Bienvenido a SpaceVault, " + usuario + " 🚀" : "❌ Usuario o contraseña incorrectos";
     }
 
     @WebMethod
@@ -43,5 +41,11 @@ public class ServicioArchivos implements ServicioArchivosInterface {
     @WebMethod
     public byte[] leerArchivo(String usuario, String ruta, String nombre) {
         return gestor.leerArchivo(usuario, ruta, nombre);
+    }
+
+    @WebMethod
+    public String compartirArchivo(String owner, String invitado, String ruta, String nombre) {
+        boolean ok = db.compartir(owner, invitado, ruta, nombre);
+        return ok ? "🤝 Archivo compartido con " + invitado : "❌ No se pudo compartir archivo";
     }
 }
