@@ -12,7 +12,6 @@ public class DBServer {
     private final String jdbcUrl;
     private final String user;
     private final String pass;
-
     private Connection conn;
 
     public DBServer(int port, String jdbcUrl, String user, String pass) {
@@ -37,7 +36,6 @@ public class DBServer {
         }
     }
 
-    /** Crear tablas necesarias **/
     private void initSchema() throws SQLException {
         try (Statement st = conn.createStatement()) {
             st.executeUpdate("""
@@ -77,7 +75,6 @@ public class DBServer {
         }
     }
 
-    /** Manejar conexiones entrantes TCP **/
     private void handle(Socket client) {
         try (client;
              BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream(), StandardCharsets.UTF_8));
@@ -95,7 +92,6 @@ public class DBServer {
         }
     }
 
-    /** Procesar comandos entrantes **/
     private String process(String cmd) {
         try {
             String[] p = cmd.split("\\|");
@@ -103,13 +99,10 @@ public class DBServer {
                 case "REGISTER": return register(p[1], p[2]) ? "OK" : "EXISTS";
                 case "LOGIN": return login(p[1], p[2]) ? "OK" : "FAIL";
                 case "SHARE": return share(p[1], p[2], p[3], p[4]) ? "OK" : "FAIL";
-
-                // NUEVOS COMANDOS
                 case "MKDIR": return mkdir(p[1], p[2], p[3]) ? "OK" : "FAIL";
                 case "STORE": return storeFile(p[1], p[2], p[3], Long.parseLong(p[4]), p[5]) ? "OK" : "FAIL";
                 case "DELETE": return deleteFile(p[1], p[2], p[3]) ? "OK" : "FAIL";
                 case "MOVE": return moveFile(p[1], p[2], p[3]) ? "OK" : "FAIL";
-
                 default: return "ERR:CMD";
             }
         } catch (Exception e) {
@@ -117,7 +110,7 @@ public class DBServer {
         }
     }
 
-    // ----------- FUNCIONES PRINCIPALES -----------
+    // --- OPERACIONES PRINCIPALES ---
 
     private boolean register(String usuario, String password) throws SQLException {
         String sql = "INSERT INTO usuarios (usuario, password) VALUES (?, ?) ON CONFLICT (usuario) DO NOTHING";
@@ -192,13 +185,13 @@ public class DBServer {
         }
     }
 
-    // --------------------------------------------
+    // --- MAIN SIMPLIFICADO PARA TU MAC ---
 
     public static void main(String[] args) throws Exception {
-        int port = args.length > 0 ? Integer.parseInt(args[0]) : 9090;
-        String url = args.length > 1 ? args[1] : "jdbc:postgresql://localhost:5432/spacevaultjava";
-        String user = args.length > 2 ? args[2] : "postgres";
-        String pass = args.length > 3 ? args[3] : "postgres";
+        int port = 9090;
+        String url = "jdbc:postgresql://localhost:5432/spacevaultjava";
+        String user = "sergiolejarde";
+        String pass = ""; // sin contraseña
         new DBServer(port, url, user, pass).start();
     }
 }
