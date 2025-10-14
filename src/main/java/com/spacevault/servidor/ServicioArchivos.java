@@ -13,43 +13,35 @@ import com.spacevault.servidor.db.DBClient;
 )
 public class ServicioArchivos implements ServicioArchivosInterface {
 
-    private GestorNodos gestor = new GestorNodos();
-    private DBClient db = new DBClient("localhost", 9090); // conexión TCP a DBServer
+    private final GestorNodos gestor = new GestorNodos();
+    private final DBClient db = new DBClient("localhost", 9090);
 
-    // --- USUARIOS ---
+    // 🔐 Registro y autenticación
     @WebMethod
     public String registrarUsuario(String usuario, String password) {
         boolean ok = db.registrarUsuario(usuario, password);
-        return ok ? "✅ Usuario registrado en base de datos"
-                  : "⚠️ Usuario ya existe o error de conexión";
+        return ok ? "✅ Usuario registrado en base de datos" : "⚠️ Usuario ya existe o error de conexión";
     }
 
     @WebMethod
     public String loginUsuario(String usuario, String password) {
         boolean ok = db.login(usuario, password);
-        return ok ? "✅ Bienvenido a SpaceVault, " + usuario + " 🚀"
-                  : "❌ Usuario o contraseña incorrectos";
+        return ok ? "✅ Bienvenido a SpaceVault, " + usuario + " 🚀" : "❌ Usuario o contraseña incorrectos";
     }
 
-    // --- DIRECTORIOS ---
+    // 📂 Operaciones de archivos
     @WebMethod
     public String crearDirectorio(String usuario, String ruta) {
-        String result = gestor.crearDirectorio(usuario, ruta);
-        // Registrar en BD
-        String padre = ruta.contains("/") ? ruta.substring(0, ruta.lastIndexOf("/")) : "/";
-        String nombre = ruta.substring(ruta.lastIndexOf("/") + 1);
-        db.send("MKDIR|" + usuario + "|" + padre + "|" + nombre);
-        return result + " (📂 registrado en BD)";
+        String res = gestor.crearDirectorio(usuario, ruta);
+        db.sendCommand("MKDIR|" + usuario + "|" + ruta + "|-");
+        return res;
     }
 
-    // --- ARCHIVOS ---
     @WebMethod
     public String subirArchivo(String usuario, String ruta, String nombre, byte[] datos) {
-        String result = gestor.almacenarArchivo(usuario, ruta, nombre, datos);
-        // Guardar metadatos del archivo en BD (ruta, tamaño, nodo)
-        long tamanio = datos.length;
-        db.send("STORE|" + usuario + "|" + ruta + "|" + nombre + "|" + tamanio + "|Nodo1");
-        return result + " (💾 metadatos guardados en BD)";
+        String res = gestor.almacenarArchivo(usuario, ruta, nombre, datos);
+        db.sendCommand("STORE|" + usuario + "|" + ruta + "|" + nombre + "|" + datos.length + "|Nodo1");
+        return res;
     }
 
     @WebMethod
@@ -57,25 +49,26 @@ public class ServicioArchivos implements ServicioArchivosInterface {
         return gestor.leerArchivo(usuario, ruta, nombre);
     }
 
+    // 🗑️ Eliminar archivo o directorio
     @WebMethod
     public String eliminarArchivo(String usuario, String ruta, String nombre) {
-        String result = gestor.eliminarArchivo(usuario, ruta, nombre);
-        db.send("DELETE|" + usuario + "|" + ruta + "|" + nombre);
-        return result + " (🗑️ eliminado también en BD)";
+        String res = gestor.eliminarArchivo(usuario, ruta, nombre);
+        db.sendCommand("DELETE|" + usuario + "|" + ruta + "|" + nombre);
+        return res;
     }
 
+    // 📦 Mover o renombrar archivo/directorio
     @WebMethod
-    public String moverArchivo(String usuario, String rutaVieja, String rutaNueva) {
-        String result = gestor.moverArchivo(usuario, rutaVieja, rutaNueva);
-        db.send("MOVE|" + usuario + "|" + rutaVieja + "|" + rutaNueva);
-        return result + " (📦 ruta actualizada en BD)";
+    public String moverArchivo(String usuario, String origen, String destino) {
+        String res = gestor.moverArchivo(usuario, origen, destino);
+        db.sendCommand("MOVE|" + usuario + "|" + origen + "|" + destino);
+        return res;
     }
 
-    // --- COMPARTIR ---
+    // 🤝 Compartir archivo con otro usuario
     @WebMethod
     public String compartirArchivo(String owner, String invitado, String ruta, String nombre) {
         boolean ok = db.compartir(owner, invitado, ruta, nombre);
-        return ok ? "🤝 Archivo compartido con " + invitado
-                  : "❌ No se pudo compartir archivo";
+        return ok ? "🤝 Archivo compartido con " + invitado : "❌ No se pudo compartir archivo";
     }
 }

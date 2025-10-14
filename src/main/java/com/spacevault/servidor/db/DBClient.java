@@ -14,7 +14,7 @@ public class DBClient {
     }
 
     /** Envía una línea de comando al DBServer y retorna la respuesta textual. */
-    public String send(String line) { // ← cambio a 'public'
+    public String send(String line) { 
         try (Socket s = new Socket(host, port);
              BufferedReader in = new BufferedReader(new InputStreamReader(s.getInputStream(), StandardCharsets.UTF_8));
              BufferedWriter out = new BufferedWriter(new OutputStreamWriter(s.getOutputStream(), StandardCharsets.UTF_8))) {
@@ -24,6 +24,14 @@ public class DBClient {
             return in.readLine(); // respuesta de una línea
         } catch (Exception e) {
             return "ERR:" + e.getMessage();
+        }
+    }
+
+    /** 🔹 Método genérico para que el servidor SOAP envíe comandos directos al DBServer */
+    public void sendCommand(String cmd) {
+        String res = send(cmd);
+        if (!"OK".equals(res)) {
+            System.err.println("⚠️ DBServer devolvió: " + res);
         }
     }
 
