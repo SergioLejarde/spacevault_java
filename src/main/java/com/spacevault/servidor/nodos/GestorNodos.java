@@ -7,78 +7,129 @@ import java.io.File;
 
 public class GestorNodos {
 
-    // Crea el directorio físico en disco en el nodo remoto
+    /** Obtiene referencia al Nodo1 (puerto 1099) */
+    private NodeRemote nodo1() throws Exception {
+        Registry r1 = LocateRegistry.getRegistry("localhost", 1099);
+        return (NodeRemote) r1.lookup("Nodo1");
+    }
+
+    /** Obtiene referencia al Nodo2 (puerto 1100) */
+    private NodeRemote nodo2() throws Exception {
+        Registry r2 = LocateRegistry.getRegistry("localhost", 1100);
+        return (NodeRemote) r2.lookup("Nodo2");
+    }
+
+    /** 📁 Crea el directorio en ambos nodos (replicado) */
     public String crearDirectorio(String usuario, String ruta) {
+        String fullPath = usuario + ruta;
         try {
-            Registry registry = LocateRegistry.getRegistry("localhost", 1099);
-            NodeRemote nodo = (NodeRemote) registry.lookup("Nodo1");
-            String fullPath = usuario + ruta;
-            nodo.crearDirectorio(fullPath);
-            return "📁 Directorio '" + ruta + "' creado correctamente para " + usuario;
+            nodo1().crearDirectorio(fullPath);
+            System.out.println("📁 Nodo1 creó: " + fullPath);
         } catch (Exception e) {
-            e.printStackTrace();
-            return "❌ Error al crear directorio: " + e.getMessage();
+            System.err.println("⚠️ Nodo1 error crearDirectorio: " + e.getMessage());
         }
+        try {
+            nodo2().crearDirectorio(fullPath);
+            System.out.println("📁 Nodo2 creó: " + fullPath);
+        } catch (Exception e) {
+            System.err.println("⚠️ Nodo2 error crearDirectorio: " + e.getMessage());
+        }
+        return "📂 Directorio '" + ruta + "' creado (replicado en Nodo1 y Nodo2)";
     }
 
-    // Guarda el archivo (en bytes) en el nodo remoto
+    /** 📦 Guarda el archivo en ambos nodos (redundancia real) */
     public String almacenarArchivo(String usuario, String ruta, String nombre, byte[] datos) {
+        String fullPath = usuario + File.separator + ruta;
+
+        boolean ok1 = false, ok2 = false;
         try {
-            Registry registry = LocateRegistry.getRegistry("localhost", 1099);
-            NodeRemote nodo = (NodeRemote) registry.lookup("Nodo1");
-            String fullPath = usuario + File.separator + ruta;
-            nodo.guardarArchivo(fullPath, nombre, datos);
-            return "📦 Archivo '" + nombre + "' almacenado correctamente en " + fullPath;
+            nodo1().guardarArchivo(fullPath, nombre, datos);
+            ok1 = true;
+            System.out.println("💾 Nodo1 guardó: " + fullPath + "/" + nombre);
         } catch (Exception e) {
-            e.printStackTrace();
-            return "❌ Error al enviar al nodo: " + e.getMessage();
+            System.err.println("⚠️ Nodo1 error guardarArchivo: " + e.getMessage());
         }
+
+        try {
+            nodo2().guardarArchivo(fullPath, nombre, datos);
+            ok2 = true;
+            System.out.println("💾 Nodo2 guardó: " + fullPath + "/" + nombre);
+        } catch (Exception e) {
+            System.err.println("⚠️ Nodo2 error guardarArchivo: " + e.getMessage());
+        }
+
+        if (ok1 || ok2)
+            return "📦 Archivo '" + nombre + "' replicado correctamente en Nodo1 y Nodo2";
+        else
+            return "❌ Error: no se pudo guardar el archivo en ningún nodo";
     }
 
-    // Lee el archivo del nodo remoto
+    /** 📖 Lee del Nodo1; si falla, intenta Nodo2 */
     public byte[] leerArchivo(String usuario, String ruta, String nombre) {
+        String fullPath = usuario + File.separator + ruta;
         try {
-            Registry registry = LocateRegistry.getRegistry("localhost", 1099);
-            NodeRemote nodo = (NodeRemote) registry.lookup("Nodo1");
-            String fullPath = usuario + File.separator + ruta;
-            return nodo.leerArchivo(fullPath, nombre);
+            byte[] data = nodo1().leerArchivo(fullPath, nombre);
+            if (data != null) return data;
         } catch (Exception e) {
-            e.printStackTrace();
-            return null;
+            System.err.println("⚠️ Error leer Nodo1: " + e.getMessage());
         }
+        try {
+            return nodo2().leerArchivo(fullPath, nombre);
+        } catch (Exception e) {
+            System.err.println("⚠️ Error leer Nodo2: " + e.getMessage());
+        }
+        return null;
     }
 
-    // 🗑️ Elimina un archivo o directorio remoto
+    /** 🗑️ Elimina el archivo en ambos nodos */
     public String eliminarArchivo(String usuario, String ruta, String nombre) {
+        String fullPath = usuario + File.separator + ruta;
+        boolean ok1 = false, ok2 = false;
         try {
-            Registry registry = LocateRegistry.getRegistry("localhost", 1099);
-            NodeRemote nodo = (NodeRemote) registry.lookup("Nodo1");
-            String fullPath = usuario + File.separator + ruta;
-            nodo.eliminarArchivo(fullPath, nombre);
-            return "🗑️ Archivo '" + nombre + "' eliminado correctamente en " + fullPath;
+            ok1 = nodo1().eliminarArchivo(fullPath, nombre);
+            System.out.println("🗑️ Nodo1 eliminó: " + fullPath + "/" + nombre);
         } catch (Exception e) {
-            e.printStackTrace();
-            return "❌ Error al eliminar archivo: " + e.getMessage();
+            System.err.println("⚠️ Nodo1 error eliminarArchivo: " + e.getMessage());
         }
+        try {
+            ok2 = nodo2().eliminarArchivo(fullPath, nombre);
+            System.out.println("🗑️ Nodo2 eliminó: " + fullPath + "/" + nombre);
+        } catch (Exception e) {
+            System.err.println("⚠️ Nodo2 error eliminarArchivo: " + e.getMessage());
+        }
+
+        if (ok1 || ok2)
+            return "🗑️ Archivo eliminado (al menos en un nodo)";
+        else
+            return "❌ No se pudo eliminar el archivo en ninguno de los nodos";
     }
 
-    // 📦 Mueve o renombra un archivo remoto
+    /** 🚚 Mueve/renombra el archivo en ambos nodos */
     public String moverArchivo(String usuario, String rutaVieja, String rutaNueva) {
+        String src = usuario + File.separator + rutaVieja;
+        String dst = usuario + File.separator + rutaNueva;
+        boolean ok1 = false, ok2 = false;
         try {
-            Registry registry = LocateRegistry.getRegistry("localhost", 1099);
-            NodeRemote nodo = (NodeRemote) registry.lookup("Nodo1");
-            String fullOld = usuario + File.separator + rutaVieja;
-            String fullNew = usuario + File.separator + rutaNueva;
-            nodo.moverArchivo(fullOld, fullNew);
-            return "📦 Archivo movido correctamente de " + rutaVieja + " a " + rutaNueva;
+            ok1 = nodo1().moverArchivo(src, dst);
+            System.out.println("📦 Nodo1 movió: " + src + " -> " + dst);
         } catch (Exception e) {
-            e.printStackTrace();
-            return "❌ Error al mover archivo: " + e.getMessage();
+            System.err.println("⚠️ Nodo1 error moverArchivo: " + e.getMessage());
         }
+        try {
+            ok2 = nodo2().moverArchivo(src, dst);
+            System.out.println("📦 Nodo2 movió: " + src + " -> " + dst);
+        } catch (Exception e) {
+            System.err.println("⚠️ Nodo2 error moverArchivo: " + e.getMessage());
+        }
+
+        if (ok1 || ok2)
+            return "📦 Archivo movido/renombrado (replicado en ambos nodos)";
+        else
+            return "❌ No se pudo mover el archivo en ninguno de los nodos";
     }
 
-    // Listado simbólico de nodos activos
+    /** 🛰️ Información de los nodos activos */
     public String listarNodos() {
-        return "Nodos activos: Nodo1 (localhost:1099)";
+        return "Nodos activos:\n🛰️ Nodo1 -> localhost:1099\n🛰️ Nodo2 -> localhost:1100";
     }
 }

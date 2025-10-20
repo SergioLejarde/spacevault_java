@@ -4,22 +4,14 @@ import java.io.*;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 
-public class NodeRemoteImpl extends UnicastRemoteObject implements NodeRemote {
+public class NodeRemoteImpl2 extends UnicastRemoteObject implements NodeRemote {
 
-    private final String BASE_DIR;
+    private static final String BASE_DIR = "data-Node2";
 
-    // 🔹 Constructor por defecto (para Nodo1)
-    public NodeRemoteImpl() throws RemoteException {
-        this("data-Node1");
-    }
-
-    // 🔹 Constructor personalizado (para Nodo2, o futuros nodos)
-    public NodeRemoteImpl(String baseDir) throws RemoteException {
+    public NodeRemoteImpl2() throws RemoteException {
         super();
-        this.BASE_DIR = baseDir;
         File base = new File(BASE_DIR);
         if (!base.exists()) base.mkdirs();
-        System.out.println("💾 Nodo inicializado con base: " + base.getAbsolutePath());
     }
 
     @Override
@@ -27,7 +19,7 @@ public class NodeRemoteImpl extends UnicastRemoteObject implements NodeRemote {
         File dir = new File(BASE_DIR + File.separator + ruta);
         if (!dir.exists()) {
             dir.mkdirs();
-            System.out.println("📁(" + BASE_DIR + ") Directorio creado: " + dir.getAbsolutePath());
+            System.out.println("📁(Nodo2) Directorio creado: " + dir.getAbsolutePath());
         }
     }
 
@@ -40,9 +32,9 @@ public class NodeRemoteImpl extends UnicastRemoteObject implements NodeRemote {
             try (FileOutputStream fos = new FileOutputStream(f)) {
                 fos.write(datos);
             }
-            System.out.println("💾(" + BASE_DIR + ") Archivo guardado: " + f.getAbsolutePath());
+            System.out.println("💾(Nodo2) Archivo guardado: " + f.getAbsolutePath());
         } catch (IOException e) {
-            throw new RemoteException("Error al guardar archivo (" + BASE_DIR + ")", e);
+            throw new RemoteException("Error al guardar archivo (Nodo2)", e);
         }
     }
 
@@ -55,7 +47,7 @@ public class NodeRemoteImpl extends UnicastRemoteObject implements NodeRemote {
                 return fis.readAllBytes();
             }
         } catch (IOException e) {
-            throw new RemoteException("Error al leer archivo (" + BASE_DIR + ")", e);
+            throw new RemoteException("Error al leer archivo (Nodo2)", e);
         }
     }
 
@@ -63,7 +55,7 @@ public class NodeRemoteImpl extends UnicastRemoteObject implements NodeRemote {
     public boolean eliminarArchivo(String ruta, String nombre) throws RemoteException {
         File f = new File(BASE_DIR + File.separator + ruta + File.separator + nombre);
         boolean ok = f.exists() && f.delete();
-        System.out.println("🗑️(" + BASE_DIR + ") Eliminar " + f.getAbsolutePath() + " -> " + ok);
+        System.out.println("🗑️(Nodo2) Eliminar " + f.getAbsolutePath() + " -> " + ok);
         return ok;
     }
 
@@ -74,7 +66,7 @@ public class NodeRemoteImpl extends UnicastRemoteObject implements NodeRemote {
         if (!src.exists()) return false;
         dst.getParentFile().mkdirs();
         boolean ok = src.renameTo(dst);
-        System.out.println("📦(" + BASE_DIR + ") Mover " + src.getAbsolutePath() + " -> " + dst.getAbsolutePath() + " = " + ok);
+        System.out.println("📦(Nodo2) Mover " + src.getAbsolutePath() + " -> " + dst.getAbsolutePath() + " = " + ok);
         return ok;
     }
 }
