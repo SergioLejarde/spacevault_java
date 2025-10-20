@@ -36,6 +36,7 @@ public class DBServer {
         }
     }
 
+    /** Inicializa las tablas necesarias en PostgreSQL **/
     private void initSchema() throws SQLException {
         try (Statement st = conn.createStatement()) {
             st.executeUpdate("""
@@ -75,6 +76,7 @@ public class DBServer {
         }
     }
 
+    /** Maneja una conexión TCP entrante **/
     private void handle(Socket client) {
         try (client;
              BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream(), StandardCharsets.UTF_8));
@@ -82,6 +84,9 @@ public class DBServer {
 
             String line = in.readLine();
             if (line == null) return;
+
+            // 🔹 Nuevo log para verificar replicación
+            System.out.println("📥 Comando recibido en puerto " + port + ": " + line);
 
             String res = process(line.trim());
             out.write(res);
@@ -92,6 +97,7 @@ public class DBServer {
         }
     }
 
+    /** Procesa comandos del cliente **/
     private String process(String cmd) {
         try {
             String[] p = cmd.split("\\|");
@@ -110,7 +116,7 @@ public class DBServer {
         }
     }
 
-    // --- OPERACIONES PRINCIPALES ---
+    // --------------------- OPERACIONES SQL ---------------------
 
     private boolean register(String usuario, String password) throws SQLException {
         String sql = "INSERT INTO usuarios (usuario, password) VALUES (?, ?) ON CONFLICT (usuario) DO NOTHING";
@@ -185,7 +191,7 @@ public class DBServer {
         }
     }
 
-    // --- MAIN SIMPLIFICADO PARA TU MAC ---
+    // --------------------- MAIN PARA MAC ---------------------
 
     public static void main(String[] args) throws Exception {
         int port = 9090;

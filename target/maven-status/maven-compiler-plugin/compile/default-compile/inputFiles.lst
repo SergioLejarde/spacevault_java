@@ -8,5 +8,6 @@
 /Users/sergiolejarde/Downloads/spacevault_java/src/main/java/com/spacevault/servidor/ServicioArchivosInterface.java
 /Users/sergiolejarde/Downloads/spacevault_java/src/main/java/com/spacevault/servidor/db/DBClient.java
 /Users/sergiolejarde/Downloads/spacevault_java/src/main/java/com/spacevault/servidor/db/DBServer.java
+/Users/sergiolejarde/Downloads/spacevault_java/src/main/java/com/spacevault/servidor/db/DBServerReplica.java
 /Users/sergiolejarde/Downloads/spacevault_java/src/main/java/com/spacevault/servidor/nodos/GestorNodos.java
 /Users/sergiolejarde/Downloads/spacevault_java/src/main/java/com/spacevault/servidor/workers/WorkerPool.java

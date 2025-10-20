@@ -14,7 +14,8 @@ import com.spacevault.servidor.db.DBClient;
 public class ServicioArchivos implements ServicioArchivosInterface {
 
     private final GestorNodos gestor = new GestorNodos();
-    private final DBClient db = new DBClient("localhost", 9090);
+    private final DBClient db = new DBClient("localhost", 9090, 9100);
+
 
     // 🔐 Registro y autenticación
     @WebMethod
