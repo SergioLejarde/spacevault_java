@@ -2,7 +2,8 @@ package com.spacevault.servidor;
 
 import jakarta.jws.WebService;
 import jakarta.jws.WebMethod;
-import com.spacevault.servidor.nodos.GestorNodos;
+
+import com.spacevault.nodos.GestorNodos;
 import com.spacevault.servidor.db.DBClient;
 
 @WebService(

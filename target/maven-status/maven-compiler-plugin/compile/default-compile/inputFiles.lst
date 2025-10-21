@@ -1,5 +1,6 @@
 /Users/sergiolejarde/Downloads/spacevault_java/src/main/java/com/example/App.java
 /Users/sergiolejarde/Downloads/spacevault_java/src/main/java/com/spacevault/cliente/ClienteSOAP.java
+/Users/sergiolejarde/Downloads/spacevault_java/src/main/java/com/spacevault/nodos/GestorNodos.java
 /Users/sergiolejarde/Downloads/spacevault_java/src/main/java/com/spacevault/nodos/NodeRemote.java
 /Users/sergiolejarde/Downloads/spacevault_java/src/main/java/com/spacevault/nodos/NodeRemoteImpl.java
 /Users/sergiolejarde/Downloads/spacevault_java/src/main/java/com/spacevault/nodos/NodeRemoteImpl2.java
@@ -11,5 +12,4 @@
 /Users/sergiolejarde/Downloads/spacevault_java/src/main/java/com/spacevault/servidor/db/DBClient.java
 /Users/sergiolejarde/Downloads/spacevault_java/src/main/java/com/spacevault/servidor/db/DBServer.java
 /Users/sergiolejarde/Downloads/spacevault_java/src/main/java/com/spacevault/servidor/db/DBServerReplica.java
-/Users/sergiolejarde/Downloads/spacevault_java/src/main/java/com/spacevault/servidor/nodos/GestorNodos.java
 /Users/sergiolejarde/Downloads/spacevault_java/src/main/java/com/spacevault/servidor/workers/WorkerPool.java

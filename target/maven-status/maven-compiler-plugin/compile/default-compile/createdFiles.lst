@@ -1,8 +1,8 @@
 com/spacevault/servidor/ServerPublisher.class
 com/example/App.class
 com/spacevault/servidor/ServicioArchivos.class
+com/spacevault/nodos/GestorNodos.class
 com/spacevault/nodos/NodeRemoteImpl.class
-com/spacevault/servidor/nodos/GestorNodos.class
 com/spacevault/nodos/NodeServer2.class
 com/spacevault/nodos/NodeRemote.class
 com/spacevault/servidor/db/DBServer.class
