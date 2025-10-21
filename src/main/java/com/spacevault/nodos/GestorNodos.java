@@ -98,7 +98,7 @@ public class GestorNodos {
         }
 
         if (ok1 || ok2)
-            return "🗑️ Archivo eliminado (al menos en un nodo)";
+            return "🗑️ Archivo eliminado";
         else
             return "❌ No se pudo eliminar el archivo en ninguno de los nodos";
     }
@@ -122,7 +122,7 @@ public class GestorNodos {
         }
 
         if (ok1 || ok2)
-            return "📦 Archivo movido/renombrado (replicado en ambos nodos)";
+            return "📦 Archivo movido y ruta renombrada (replicado en ambos nodos)";
         else
             return "❌ No se pudo mover el archivo en ninguno de los nodos";
     }
