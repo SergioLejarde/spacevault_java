@@ -1,6 +1,6 @@
 # 🚀 Guía de Ejecución del Sistema Distribuido **SpaceVault**
 
-Este documento explica **qué comandos ejecutar, en qué orden y por qué**, para levantar el sistema distribuido **SpaceVault** completo.  
+Este documento explica **qué comandos ejecutar, en qué orden y por qué**, con el fin de levantar el sistema distribuido **SpaceVault** completo.  
 Incluye: compilación, servidores de base de datos (TCP), nodos de almacenamiento (RMI), servidor SOAP, cliente y verificación en PostgreSQL.
 
 > 🧩 **Requisitos previos:**  

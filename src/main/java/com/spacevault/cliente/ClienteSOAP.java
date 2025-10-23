@@ -31,7 +31,7 @@ public class ClienteSOAP {
                 System.out.println("4. Subir archivo");
                 System.out.println("5. Descargar archivo");
                 System.out.println("6. Eliminar archivo");
-                System.out.println("7. Mover archivo");
+                System.out.println("7. Renombrar carpeta/archivo");
                 System.out.println("8. Compartir archivo con otro usuario");
                 System.out.println("9. Salir");
                 System.out.print("Selecciona una opción: ");

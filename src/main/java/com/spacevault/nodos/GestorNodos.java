@@ -6,13 +6,13 @@ import java.io.File;
 
 public class GestorNodos {
 
-    /** Obtiene referencia al Nodo1 (puerto 1099) */
+    /** 🔗 Obtiene referencia al Nodo1 (puerto 1099) */
     private NodeRemote nodo1() throws Exception {
         Registry r1 = LocateRegistry.getRegistry("localhost", 1099);
         return (NodeRemote) r1.lookup("Nodo1");
     }
 
-    /** Obtiene referencia al Nodo2 (puerto 1100) */
+    /** 🔗 Obtiene referencia al Nodo2 (puerto 1100) */
     private NodeRemote nodo2() throws Exception {
         Registry r2 = LocateRegistry.getRegistry("localhost", 1100);
         return (NodeRemote) r2.lookup("Nodo2");
@@ -98,7 +98,7 @@ public class GestorNodos {
         }
 
         if (ok1 || ok2)
-            return "🗑️ Archivo eliminado";
+            return "🗑️ Archivo eliminado (en ambos nodos)";
         else
             return "❌ No se pudo eliminar el archivo en ninguno de los nodos";
     }
@@ -122,9 +122,59 @@ public class GestorNodos {
         }
 
         if (ok1 || ok2)
-            return "📦 Archivo movido y ruta renombrada (replicado en ambos nodos)";
+            return "📦 Archivo movido/renombrado (replicado en ambos nodos)";
         else
-            return "❌ No se pudo mover el archivo en ninguno de los nodos";
+            return "❌ No se pudo renombrar el archivo en ninguno de los nodos";
+    }
+
+    /** 🤝 Copia un archivo compartido del dueño hacia el invitado (en ambos nodos) */
+    public String compartirArchivo(String owner, String invitado, String ruta, String nombre) {
+        try {
+            String origen = owner + File.separator + ruta;
+            String destino = invitado + File.separator + ruta;
+
+            // 🔹 Intentar leer el archivo desde Nodo1 o Nodo2
+            byte[] data = null;
+            try {
+                data = nodo1().leerArchivo(origen, nombre);
+                if (data != null) {
+                    System.out.println("📥 Archivo leído desde Nodo1: " + origen + "/" + nombre);
+                }
+            } catch (Exception e1) {
+                System.err.println("⚠️ Nodo1 no disponible, intentando Nodo2...");
+                try {
+                    data = nodo2().leerArchivo(origen, nombre);
+                    System.out.println("📥 Archivo leído desde Nodo2: " + origen + "/" + nombre);
+                } catch (Exception e2) {
+                    System.err.println("❌ Error leyendo archivo desde ambos nodos: " + e2.getMessage());
+                }
+            }
+
+            if (data == null) {
+                return "❌ No se pudo leer el archivo original (" + origen + ")";
+            }
+
+            // 🔹 Guardar el archivo en el espacio del invitado (en ambos nodos)
+            try {
+                nodo1().guardarArchivo(destino, nombre, data);
+                System.out.println("📤 Nodo1 compartió archivo en: " + destino + "/" + nombre);
+            } catch (Exception e) {
+                System.err.println("⚠️ Nodo1 error al copiar archivo: " + e.getMessage());
+            }
+
+            try {
+                nodo2().guardarArchivo(destino, nombre, data);
+                System.out.println("📤 Nodo2 compartió archivo en: " + destino + "/" + nombre);
+            } catch (Exception e) {
+                System.err.println("⚠️ Nodo2 error al copiar archivo: " + e.getMessage());
+            }
+
+            return "📁 Archivo '" + nombre + "' replicado en nodos del usuario " + invitado;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "❌ Error al compartir: " + e.getMessage();
+        }
     }
 
     /** 🛰️ Información de los nodos activos */
