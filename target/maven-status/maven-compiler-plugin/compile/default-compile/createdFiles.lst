@@ -1,5 +1,4 @@
 com/spacevault/servidor/ServerPublisher.class
-com/example/App.class
 com/spacevault/servidor/ServicioArchivos.class
 com/spacevault/nodos/GestorNodos.class
 com/spacevault/nodos/NodeRemoteImpl.class
